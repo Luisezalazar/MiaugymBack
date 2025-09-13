@@ -1,0 +1,5 @@
+Entity exercises are the default exercises
+
+MyRoutine is the set of exercises created
+
+RoutineExercises is exercises for MyRoutine
