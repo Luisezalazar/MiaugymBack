@@ -33,7 +33,7 @@ router.get("/getRoutineExercise", async (req, res) => {
         if (getRoutineExercise.length === 0) { console.log("There is no data") }
         res.json(getRoutineExercise)
     } catch (error) {
-        res.status(500).json({ error: "Error getting data" })
+        res.status(500).json({ error: "Error getting data",error })
     }
 })
 
@@ -47,7 +47,7 @@ router.get("/getRoutineExercise/:id", async (req, res) => {
         if (!getRoutineExercise) { return res.status(400).json({ error: "There is no data" }) }
         res.json(getRoutineExercise)
     } catch (error) {
-        res.status(500).json({ error: "Error getting data" })
+        res.status(500).json({ error: "Error getting data",error })
     }
 })
 

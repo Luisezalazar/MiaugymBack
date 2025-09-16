@@ -18,7 +18,7 @@ router.post("/createRoutine", async (req, res) => {
         const person = await prisma.person.findUnique({
             where: { id: findPerson }
         })
-        if (!person) { res.status(404).json({ error: "Person not found" }) }
+        if (!person) { res.status(404).json({ error: "Person not found",error }) }
 
         //Create routine
         const routine = await prisma.routine.create({
@@ -48,11 +48,11 @@ router.post("/createRoutine", async (req, res) => {
 router.get("/getRoutine", async (req, res) => {
     try {
         const getRoutine = await prisma.routine.findMany({ include: { routineExercise: true } });
-        if (getRoutine.length === 0) { console.log('There is no data') }
+        if (getRoutine.length === 0) { console.log('There is no data',error) }
         res.json(getRoutine)
 
     } catch (error) {
-        res.status(500).json({ error: "Error getting data" })
+        res.status(500).json({ error: "Error getting data",error })
     }
 })
 
@@ -70,7 +70,7 @@ router.get("/getRoutine/:id", async (req, res) => {
         res.json(getRoutineId)
 
     } catch (error) {
-        res.status(500).json({error:"Error getting data"})
+        res.status(500).json({error:"Error getting data",error})
     }
 })
 

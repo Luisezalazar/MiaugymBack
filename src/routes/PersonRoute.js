@@ -33,7 +33,7 @@ router.get("/getPeople", async (req, res) => {
         if (getPeople.length === 0) { console.log("There is no data") }
         res.json(getPeople)
     } catch (error) {
-        res.status(500).json({ error: "Error getting data" })
+        res.status(500).json({ error: "Error getting data", error })
     }
 })
 // Get by id // Read
@@ -46,7 +46,7 @@ router.get("/getPerson/:id", async (req, res) => {
         if (!getPersonById) { return res.status(404).json({ error: "There is no data" }) }
         res.json(getPersonById)
     } catch (error) {
-        res.status(500).json({ error: "Error getting data" })
+        res.status(500).json({ error: "Error getting data", error })
     }
 })
 
@@ -60,7 +60,7 @@ router.get("/getPersonRoutine/:id", async (req, res) => {
         })
         res.json(getPersonId)
     } catch (error) {
-        res.status(500).json({ error: "The person doesn't have a Routine" })
+        res.status(500).json({ error: "The person doesn't have a Routine", error })
     }
 })
 
@@ -70,7 +70,7 @@ router.put("/updatePerson/:id", async (req, res) => {
         const id = parseInt(req.params.id);
         const { name, dni, email } = req.body
         if (!name == null || !dni == null || !email == null) {
-            return res.status(400).json({ error: "All fields are required" })
+            return res.status(400).json({ error: "All fields are required", error })
         }
         const updatePerson = await prisma.person.update({
             where: { id: id },
@@ -82,7 +82,7 @@ router.put("/updatePerson/:id", async (req, res) => {
         })
         res.json(updatePerson)
     } catch (error) {
-        res.status(500).json({ error: "Error updating data" })
+        res.status(500).json({ error: "Error updating data" , error})
     }
 })
 
