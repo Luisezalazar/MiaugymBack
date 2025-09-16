@@ -22,21 +22,21 @@ model Person {
 }
 
 model RoutineExercise {
-  id          Int       @id @default(autoincrement())
+  id          Int     @id @default(autoincrement())
   name        String
   weight      String
   series      String
   repetitions String
-  Routine     Routine[]
+  Routine     Routine @relation(fields: [routineId], references: [id])
+  routineId   Int
 }
 
 model Routine {
-  id                Int             @id @default(autoincrement())
-  name              String
-  routineExercise   RoutineExercise @relation(fields: [routineExerciseId], references: [id])
-  person            Person          @relation(fields: [personId], references: [id])
-  routineExerciseId Int
-  personId          Int
+  id              Int               @id @default(autoincrement())
+  name            String
+  person          Person            @relation(fields: [personId], references: [id])
+  personId        Int
+  routineExercise RoutineExercise[]
 }
 
 model Exercise {

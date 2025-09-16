@@ -8,39 +8,72 @@ const prisma = new PrismaClient();
 
 // Post // Create
 router.post("/createRoutine", async (req, res) => {
+    console.log(req.body)
     try {
-        const { person, name, RoutineExercise } = req.body
-        const personId = parseInt(person)
+        const { name, personId, routineExercise } = req.body
 
-        const routine = await prisma.routine.create({
-            data: { name, person: { connect: { id: personId } } }
+        const findPerson = parseInt(personId)
+
+        //The person exists?
+        const person = await prisma.person.findUnique({
+            where: { id: findPerson }
         })
+        if (!person) { res.status(404).json({ error: "Person not found" }) }
 
-        const exercises = await Promise.all(
-            RoutineExercise.map(async (exercises)=>{
-                const exercisesId = parseInt(exercises.id)
-                const findExercise = await prisma.exercise.findUnique({
-                    where:{id:(exercisesId)}
-                })
-                //Validation
-                if(!findExercise){res.status(500).json({error: "The exercise was not found"})}
-
-                return await prisma.routineExercise.create({
-                    data:{
-                        name,
-                        weight,
-                        series,
-                        repetitions
-                    }
-                })
-            })
-        )
-
-        //Update 
+        //Create routine
+        const routine = await prisma.routine.create({
+            data: {
+                name: name,
+                person: { connect: { id: findPerson } },
+                routineExercise: {
+                    create: routineExercise.map((e) => ({
+                        name: e.name,
+                        weight: e.weight,
+                        series: e.series,
+                        repetitions: e.repetitions
+                    })),
+                },
+            },
+            include: { routineExercise: true, person: true }
+        })
+        res.json(routine)
+        console.log("esito")
     } catch (error) {
-    
+        console.log("Error creating routine: ", error)
+    }
+
+})
+
+//Get all //  Read
+router.get("/getRoutine", async (req, res) => {
+    try {
+        const getRoutine = await prisma.routine.findMany({ include: { routineExercise: true } });
+        if (getRoutine.length === 0) { console.log('There is no data') }
+        res.json(getRoutine)
+
+    } catch (error) {
+        res.status(500).json({ error: "Error getting data" })
+    }
+})
+
+//Get by id // Read
+router.get("/getRoutine/:id", async (req, res) => {
+    try {
+        const id = parseInt(req.params.id)
+        const getRoutineId = await prisma.routine.findUnique({
+            where: {
+                id: id,
+            },
+            include:{routineExercise:true}
+        })
+        if (!getRoutineId) { res.status(404).json({ error: "There is no data" }) }
+        res.json(getRoutineId)
+
+    } catch (error) {
+        res.status(500).json({error:"Error getting data"})
     }
 })
 
 
 module.exports = router
+

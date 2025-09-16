@@ -49,6 +49,21 @@ router.get("/getPerson/:id", async (req, res) => {
         res.status(500).json({ error: "Error getting data" })
     }
 })
+
+//Get by id The routine of the person 
+router.get("/getPersonRoutine/:id", async (req, res) => {
+    try {
+        const id = parseInt(req.params.id)
+        const getPersonId = await prisma.person.findUnique({
+            where: { id: id },
+            include: { Routine: { include: { routineExercise: true } } }
+        })
+        res.json(getPersonId)
+    } catch (error) {
+        res.status(500).json({ error: "The person doesn't have a Routine" })
+    }
+})
+
 //Update // by id
 router.put("/updatePerson/:id", async (req, res) => {
     try {
