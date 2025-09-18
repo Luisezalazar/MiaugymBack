@@ -8,7 +8,7 @@ app.use(express.json());
 
 //Cors
 const corsOptions = {
-    origin:'https://app-gym-front.vercel.app/'
+    origin:'https://app-gym-front.vercel.app'
 }
 app.use(cors(corsOptions))
 
