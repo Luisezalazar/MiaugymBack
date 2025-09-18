@@ -7,12 +7,14 @@ const app = express();
 
 
 //Cors
-app.use(express.json());
-//Configuration
 const corsOptions = {
     origin:'https://app-gym-front-qphsiqdls-luis-zalazars-projects.vercel.app'
 }
 app.use(cors(corsOptions))
+
+app.use(express.json());
+
+
 
 app.use ('/api/Routine', RoutineRoute)
 app.use('/api/person', Person)
