@@ -8,7 +8,7 @@ app.use(express.json());
 
 //Cors
 const corsOptions = {
-    origin:'https://app-gym-front-qphsiqdls-luis-zalazars-projects.vercel.app'
+    origin:'https://app-gym-front-cbwxun6kz-luis-zalazars-projects.vercel.app'
 }
 app.use(cors(corsOptions))
 
