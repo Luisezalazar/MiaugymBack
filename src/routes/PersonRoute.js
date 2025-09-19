@@ -9,12 +9,13 @@ const prisma = new PrismaClient();
 //Post Create
 router.post("/createPerson", async (req, res) => {
     try {
-        const { name, dni, email } = req.body
+        const { user, password, dni, email } = req.body
         //Validation
-        if (!name || !dni || !email) { return res.status(400).json({ error: "Required fields are missing" }) }
+        if (!user || !password || !dni || !email) { return res.status(400).json({ error: "Required fields are missing" }) }
         const person = await prisma.person.create({
             data: {
-                name,
+                user,
+                password,
                 dni,
                 email
             }
@@ -68,21 +69,22 @@ router.get("/getPersonRoutine/:id", async (req, res) => {
 router.put("/updatePerson/:id", async (req, res) => {
     try {
         const id = parseInt(req.params.id);
-        const { name, dni, email } = req.body
-        if (!name == null || !dni == null || !email == null) {
+        const { user, password, dni, email } = req.body
+        if (!user == null || !password == null || !dni == null || !email == null) {
             return res.status(400).json({ error: "All fields are required", error })
         }
         const updatePerson = await prisma.person.update({
             where: { id: id },
             data: {
-                name,
+                user,
+                password,
                 dni,
                 email
             }
         })
         res.json(updatePerson)
     } catch (error) {
-        res.status(500).json({ error: "Error updating data" , error})
+        res.status(500).json({ error: "Error updating data", error })
     }
 })
 

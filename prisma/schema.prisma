@@ -14,11 +14,12 @@ datasource db {
 }
 
 model Person {
-  id      Int       @id @default(autoincrement())
-  name    String
-  dni     String
-  email   String
-  Routine Routine[]
+  id       Int       @id @default(autoincrement())
+  user     String @unique
+  password String
+  dni      String @unique
+  email    String
+  Routine  Routine[]
 }
 
 model RoutineExercise {
