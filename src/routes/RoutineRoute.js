@@ -1,5 +1,6 @@
 const express = require('express')
 const pkg = require('@prisma/client')
+const authMiddleware = require('../middleware/authMiddleware')
 
 // Call functions
 const { PrismaClient } = pkg
@@ -7,24 +8,18 @@ const router = express.Router();
 const prisma = new PrismaClient();
 
 // Post // Create
-router.post("/createRoutine", async (req, res) => {
+router.post("/createRoutine", authMiddleware, async (req, res) => {
     console.log(req.body)
     try {
-        const { name, personId, routineExercise } = req.body
+        const { name, routineExercise } = req.body
 
-        const findPerson = parseInt(personId)
-
-        //The person exists?
-        const person = await prisma.person.findUnique({
-            where: { id: findPerson }
-        })
-        if (!person) { res.status(404).json({ error: "Person not found",error }) }
+        const personId = req.user.id
 
         //Create routine
         const routine = await prisma.routine.create({
             data: {
                 name: name,
-                person: { connect: { id: findPerson } },
+                person: { connect: { id: personId } },
                 routineExercise: {
                     create: routineExercise.map((e) => ({
                         name: e.name,
@@ -37,7 +32,7 @@ router.post("/createRoutine", async (req, res) => {
             include: { routineExercise: true, person: true }
         })
         res.json(routine)
-        console.log("esito")
+        console.log("Successfully")
     } catch (error) {
         console.log("Error creating routine: ", error)
     }

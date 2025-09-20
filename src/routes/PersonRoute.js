@@ -1,31 +1,10 @@
 const express = require('express')
 const pkg = require('@prisma/client')
-
+const authMiddleware = require('../middleware/authMiddleware')
 //Call functions
 const { PrismaClient } = pkg
 const router = express.Router();
 const prisma = new PrismaClient();
-
-//Post Create
-router.post("/createPerson", async (req, res) => {
-    try {
-        const { user, password, dni, email } = req.body
-        //Validation
-        if (!user || !password || !dni || !email) { return res.status(400).json({ error: "Required fields are missing" }) }
-        const person = await prisma.person.create({
-            data: {
-                user,
-                password,
-                dni,
-                email
-            }
-        })
-        res.json(person)
-        console.log("Person created")
-    } catch (error) {
-        console.log("Error creating person", error)
-    }
-})
 
 //Get all // Read
 router.get("/getPeople", async (req, res) => {
@@ -52,14 +31,18 @@ router.get("/getPerson/:id", async (req, res) => {
 })
 
 //Get by id The routine of the person 
-router.get("/getPersonRoutine/:id", async (req, res) => {
+router.get("/getPersonRoutine", authMiddleware, async (req, res) => {
     try {
-        const id = parseInt(req.params.id)
+        const personId = req.user.id
         const getPersonId = await prisma.person.findUnique({
-            where: { id: id },
-            include: { Routine: { include: { routineExercise: true } } }
+            where: { id: personId },
+            include: { Routine: { include: { routineExercise:true }} }
         })
-        res.json(getPersonId)
+        if (!getPersonId) { return res.status(404).json({ message: 'User not found' }) }
+        
+        
+        res.json({ routines: getPersonId.Routine })
+
     } catch (error) {
         res.status(500).json({ error: "The person doesn't have a Routine", error })
     }
@@ -69,8 +52,8 @@ router.get("/getPersonRoutine/:id", async (req, res) => {
 router.put("/updatePerson/:id", async (req, res) => {
     try {
         const id = parseInt(req.params.id);
-        const { user, password, dni, email } = req.body
-        if (!user == null || !password == null || !dni == null || !email == null) {
+        const { user, password, email } = req.body
+        if (!user == null || !password == null || !email == null) {
             return res.status(400).json({ error: "All fields are required", error })
         }
         const updatePerson = await prisma.person.update({
@@ -78,7 +61,6 @@ router.put("/updatePerson/:id", async (req, res) => {
             data: {
                 user,
                 password,
-                dni,
                 email
             }
         })

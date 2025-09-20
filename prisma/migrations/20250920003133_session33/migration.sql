@@ -3,7 +3,6 @@ CREATE TABLE "public"."Person" (
     "id" SERIAL NOT NULL,
     "user" TEXT NOT NULL,
     "password" TEXT NOT NULL,
-    "dni" TEXT NOT NULL,
     "email" TEXT NOT NULL,
 
     CONSTRAINT "Person_pkey" PRIMARY KEY ("id")
@@ -42,7 +41,7 @@ CREATE TABLE "public"."Exercise" (
 CREATE UNIQUE INDEX "Person_user_key" ON "public"."Person"("user");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Person_dni_key" ON "public"."Person"("dni");
+CREATE UNIQUE INDEX "Person_email_key" ON "public"."Person"("email");
 
 -- AddForeignKey
 ALTER TABLE "public"."RoutineExercise" ADD CONSTRAINT "RoutineExercise_routineId_fkey" FOREIGN KEY ("routineId") REFERENCES "public"."Routine"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

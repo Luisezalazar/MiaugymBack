@@ -1,19 +1,28 @@
 const express = require("express")
 const cors = require('cors')
 const RoutineRoute = require("./routes/RoutineRoute")
-const Person = require ('./routes/PersonRoute')
+const Person = require('./routes/PersonRoute')
+const Register = require('./routes/RegisterRoute')
 
 const app = express();
+
+const corsOptions = {
+    origin: 'http://localhost:5173',
+    optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions))
+
 app.use(express.json());
 
 //Cors
-const corsOptions = {
-    origin:'https://app-gym-front.vercel.app'
-}
-app.use(cors(corsOptions))
+//const corsOptions = {
+//origin:'https://app-gym-front.vercel.app'
+//}
 
 
-app.use ('/api/Routine', RoutineRoute)
+
+app.use('/api/register', Register)
+app.use('/api/Routine', RoutineRoute)
 app.use('/api/person', Person)
 
 const port = process.env.PORT || 3000;
