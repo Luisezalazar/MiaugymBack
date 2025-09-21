@@ -4,10 +4,11 @@ const RoutineRoute = require("./routes/RoutineRoute")
 const Person = require('./routes/PersonRoute')
 const Register = require('./routes/RegisterRoute')
 //https://app-gym-front.vercel.app
+//http://localhost:5173
 const app = express();
 
 const corsOptions = {
-    origin: 'http://localhost:5173',
+    origin: 'https://app-gym-front.vercel.app',
     optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions))
