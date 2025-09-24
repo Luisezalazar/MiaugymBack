@@ -113,19 +113,25 @@ router.put("/updateRoutine/:id", authMiddleware, async (req, res) => {
 //Delete Routine with Exercises
 router.delete("/deleteRoutine/:id", authMiddleware, async (req, res) => {
     try {
-        const routineId = parseInt(req.params.id)
-        const personId = req.user.id
+    const routineId = parseInt(req.params.id)
+    const personId = req.user.id
 
-        const deletedRoutine = await prisma.routine.delete({
-            where: {
-                id: routineId,
-                personId: personId,
-            }
-        })
-        res.json({ message: "Routine and its exercises deleted successfully", routine: deletedRoutine })
-    } catch (error) {
-        console.error("Error deleting routine: ", error)
-        res.status(500).json({ error: "Error deleting routine" })
+    const routine = await prisma.routine.findFirst({
+      where: { id: routineId, personId }
+    })
+
+    if (!routine) {
+      return res.status(404).json({ error: "Routine not found" })
+    }
+
+    const deletedRoutine = await prisma.routine.delete({
+      where: { id: routineId }
+    })
+    res.json({ message: "Routine and its exercises deleted successfully", routine: deletedRoutine })
+
+  } catch (error) {
+    console.error("Error deleting routine: ", error)
+    res.status(500).json({ error: "Error deleting routine" })
     }
 })
 
