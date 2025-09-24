@@ -3,6 +3,7 @@ const cors = require('cors')
 const RoutineRoute = require("./routes/RoutineRoute")
 const Person = require('./routes/PersonRoute')
 const Register = require('./routes/RegisterRoute')
+const routineExercise = require('./routes/RoutineExercises')
 //https://app-gym-front.vercel.app
 //http://localhost:5173
 const app = express();
@@ -18,6 +19,7 @@ app.use(express.json());
 app.use('/api/register', Register)
 app.use('/api/Routine', RoutineRoute)
 app.use('/api/person', Person)
+app.use('/api/routineExercise', routineExercise)
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`Active in ${port}`))

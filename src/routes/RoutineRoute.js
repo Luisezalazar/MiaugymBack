@@ -43,11 +43,11 @@ router.post("/createRoutine", authMiddleware, async (req, res) => {
 router.get("/getRoutine", async (req, res) => {
     try {
         const getRoutine = await prisma.routine.findMany({ include: { routineExercise: true } });
-        if (getRoutine.length === 0) { console.log('There is no data',error) }
+        if (getRoutine.length === 0) { console.log('There is no data', error) }
         res.json(getRoutine)
 
     } catch (error) {
-        res.status(500).json({ error: "Error getting data",error })
+        res.status(500).json({ error: "Error getting data", error })
     }
 })
 
@@ -59,15 +59,76 @@ router.get("/getRoutine/:id", async (req, res) => {
             where: {
                 id: id,
             },
-            include:{routineExercise:true}
+            include: { routineExercise: true }
         })
         if (!getRoutineId) { res.status(404).json({ error: "There is no data" }) }
         res.json(getRoutineId)
 
     } catch (error) {
-        res.status(500).json({error:"Error getting data",error})
+        res.status(500).json({ error: "Error getting data", error })
     }
 })
+
+//Update
+router.put("/updateRoutine/:id", authMiddleware, async (req, res) => {
+    try {
+        const { name, routineExercise } = req.body
+        const personId = req.user.id
+        const routineId = parseInt(req.params.id)
+
+        const updateRoutine = await prisma.routine.update({
+            where: { id: routineId },
+            data: {
+                name,
+                person: { connect: { id: personId } },
+                routineExercise: {
+                    deleteMany: {},
+                    upsert: routineExercise.map((e) => ({
+                        where: { id: e.id || 0 },
+                        update: {
+                            name: e.name,
+                            weight: e.weight,
+                            series: e.series,
+                            repetitions: e.repetitions,
+                        },
+                        create: {
+                            name: e.name,
+                            weight: e.weight,
+                            series: e.series,
+                            repetitions: e.repetitions,
+                        }
+                    }))
+                }
+            },
+            include: { routineExercise: true, person: true },
+        })
+        res.json(updateRoutine)
+
+    } catch (error) {
+        console.error("Error updating routine: ", error)
+        res.status(500).json({ error: "Error updating routine" })
+    }
+})
+
+//Delete Routine with Exercises
+router.delete("/deleteRoutine/:id", authMiddleware, async (req, res) => {
+    try {
+        const routineId = parseInt(req.params.id)
+        const personId = req.user.id
+
+        const deletedRoutine = await prisma.routine.delete({
+            where: {
+                id: routineId,
+                personId: personId,
+            }
+        })
+        res.json({ message: "Routine and its exercises deleted successfully", routine: deletedRoutine })
+    } catch (error) {
+        console.error("Error deleting routine: ", error)
+        res.status(500).json({ error: "Error deleting routine" })
+    }
+})
+
 
 
 module.exports = router
