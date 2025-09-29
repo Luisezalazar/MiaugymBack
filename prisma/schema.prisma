@@ -30,7 +30,8 @@ model Routine {
   name            String
   person          Person            @relation(fields: [personId], references: [id])
   personId        Int
-  routineExercise RoutineExercise[] 
+  routineExercise RoutineExercise[]
+  duration        Int?
 }
 
 model Exercise {

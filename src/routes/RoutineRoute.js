@@ -11,7 +11,7 @@ const prisma = new PrismaClient();
 router.post("/createRoutine", authMiddleware, async (req, res) => {
     console.log(req.body)
     try {
-        const { name, routineExercise } = req.body
+        const { name, routineExercise, duration } = req.body
 
         const personId = req.user.id
 
@@ -20,6 +20,7 @@ router.post("/createRoutine", authMiddleware, async (req, res) => {
             data: {
                 name: name,
                 person: { connect: { id: personId } },
+                duration: duration,
                 routineExercise: {
                     create: routineExercise.map((e) => ({
                         name: e.name,
@@ -113,25 +114,25 @@ router.put("/updateRoutine/:id", authMiddleware, async (req, res) => {
 //Delete Routine with Exercises
 router.delete("/deleteRoutine/:id", authMiddleware, async (req, res) => {
     try {
-    const routineId = parseInt(req.params.id)
-    const personId = req.user.id
+        const routineId = parseInt(req.params.id)
+        const personId = req.user.id
 
-    const routine = await prisma.routine.findFirst({
-      where: { id: routineId, personId }
-    })
+        const routine = await prisma.routine.findFirst({
+            where: { id: routineId, personId }
+        })
 
-    if (!routine) {
-      return res.status(404).json({ error: "Routine not found" })
-    }
+        if (!routine) {
+            return res.status(404).json({ error: "Routine not found" })
+        }
 
-    const deletedRoutine = await prisma.routine.delete({
-      where: { id: routineId }
-    })
-    res.json({ message: "Routine and its exercises deleted successfully", routine: deletedRoutine })
+        const deletedRoutine = await prisma.routine.delete({
+            where: { id: routineId }
+        })
+        res.json({ message: "Routine and its exercises deleted successfully", routine: deletedRoutine })
 
-  } catch (error) {
-    console.error("Error deleting routine: ", error)
-    res.status(500).json({ error: "Error deleting routine" })
+    } catch (error) {
+        console.error("Error deleting routine: ", error)
+        res.status(500).json({ error: "Error deleting routine" })
     }
 })
 

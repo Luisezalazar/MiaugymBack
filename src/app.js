@@ -9,7 +9,7 @@ const routineExercise = require('./routes/RoutineExercises')
 const app = express();
 
 const corsOptions = {
-    origin: 'https://app-gym-front.vercel.app',
+    origin: 'http://localhost:5173',
     optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions))
