@@ -73,7 +73,7 @@ router.get("/getRoutine/:id", async (req, res) => {
 //Update
 router.put("/updateRoutine/:id", authMiddleware, async (req, res) => {
     try {
-        const { name, routineExercise } = req.body
+        const { name, routineExercise, duration } = req.body
         const personId = req.user.id
         const routineId = parseInt(req.params.id)
 
@@ -81,6 +81,7 @@ router.put("/updateRoutine/:id", authMiddleware, async (req, res) => {
             where: { id: routineId },
             data: {
                 name,
+                duration,
                 person: { connect: { id: personId } },
                 routineExercise: {
                     deleteMany: {},
