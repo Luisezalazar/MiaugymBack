@@ -23,7 +23,7 @@ router.post("/createPerson", async (req, res) => {
         const token = jwt.sign(
             { id: person.id, user: person.user },
             JWT_SECRET,
-            { expiresIn: "1h" }
+            { expiresIn: "3h" }
         );
 
         res.status(201).json({

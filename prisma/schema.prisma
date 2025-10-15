@@ -13,6 +13,7 @@ model Person {
   password String
   email    String    @unique
   Routine  Routine[]
+  goals    Goal[]
 }
 
 model RoutineExercise {
@@ -37,4 +38,21 @@ model Routine {
 model Exercise {
   id   Int    @id @default(autoincrement())
   name String
+}
+
+model Goal {
+  id        Int         @id @default(autoincrement())
+  objective String
+  weight    String
+  date      DateTime    @default(now())
+  images    GoalImage[]
+  person    Person      @relation(fields: [personId], references: [id])
+  personId  Int
+}
+
+model GoalImage {
+  id     Int    @id @default(autoincrement())
+  url    String
+  goal   Goal?  @relation(fields: [goalId], references: [id])
+  goalId Int?
 }
