@@ -94,20 +94,113 @@ router.get("/getGoal/:id", authMiddleware, async (req, res) => {
     }
 })
 
-//Delete by id
-router.delete("/deleteGoal/:id", async (req, res) => {
+//Update
+router.put("/updateGoal/:id", upload.array('images', 5), authMiddleware, async (req, res) => {
     try {
         const id = parseInt(req.params.id)
-        const deleteGoal = await prisma.goal.delete({
-            where: { id: id }
+        const { weight, objective, imagesToDelete } = req.body
+        const newImagesFiles = req.files || []
+        const personId = req.user.id
+
+        if (!weight || !objective) {
+            return res.status(400).json({ error: "All fields are required" });
+        }
+
+        const result = await prisma.$transaction(async (prisma) => {
+            //Delete images
+            if (imagesToDelete) {
+                const imageIds = JSON.parse(imagesToDelete)
+                if (imageIds.length > 0) {
+                    const imagesToDeleteDB = await prisma.goalImage.findMany({
+                        where: { id: { in: imageIds }, goalId: id }
+                    })
+                    await prisma.goalImage.deleteMany({
+                        where: { id: { in: imageIds }, goalId: id }
+                    })
+
+                    for (const image of imagesToDeleteDB) {
+                        try {
+                            const urlParts = image.url.split('/');
+                            const fileWithExtension = urlParts[urlParts.length - 1];
+                            const publicId = `miauGym/goals/${fileWithExtension.split('.')[0]}`;
+                            await cloudinary.uploader.destroy(publicId);
+                        } catch (cloudinaryError) {
+                            console.error("Error deleting from Cloudinary:", cloudinaryError);
+                        }
+                    }
+                }
+            }
+
+            // Subir nuevas imágenes
+            if (newImageFiles.length > 0) {
+                const uploadImages = [];
+                for (let i = 0; i < newImageFiles.length; i++) {
+                    const uploadResult = await cloudinary.uploader.upload(newImageFiles[i].path, {
+                        folder: "miauGym/goals"
+                    });
+                    uploadImages.push({
+                        url: uploadResult.secure_url,
+                        goalId: id
+                    });
+                }
+
+                await prisma.goalImage.createMany({ data: uploadImages });
+            }
+
+            // Actualizar goal
+            const updatedGoal = await prisma.goal.update({
+                where: { id },
+                data: { weight, objective },
+                include: { images: true }
+            });
+            return updatedGoal;
         })
-        res.json(deleteGoal)
+        res.json(result);
+
+
 
     } catch (error) {
-        if (error.code === "P2003") { res.status(500).json({ error: "The Goal is linked to one or more objects" }) }
-        res.status(500).json({ error: "Error delete Goal", error })
+        onsole.error("Error updating goal:", error);
+        res.status(500).json({ error: "Error updating goal", details: error });
     }
 })
+
+
+//Delete by id
+router.delete("/deleteGoal/:id", authMiddleware, async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        const goal = await prisma.goal.findUnique({
+            where: { id },
+            include: { images: true }
+        });
+
+        if (!goal) return res.status(404).json({ error: "Goal not found" });
+
+        // Delete images from Cloudinary
+        for (const image of goal.images) {
+            try {
+                const urlParts = image.url.split('/');
+                const fileWithExtension = urlParts[urlParts.length - 1];
+                const publicId = `miauGym/goals/${fileWithExtension.split('.')[0]}`;
+                await cloudinary.uploader.destroy(publicId);
+            } catch (cloudinaryError) {
+                console.error("Error deleting from Cloudinary:", cloudinaryError);
+            }
+        }
+
+        // Delete goal (cascades images in DB)
+        const deletedGoal = await prisma.goal.delete({
+            where: { id }
+        });
+
+        res.json(deletedGoal);
+
+    } catch (error) {
+        if (error.code === "P2003") return res.status(500).json({ error: "Goal is linked to other objects" });
+        res.status(500).json({ error: "Error deleting goal", details: error });
+    }
+});
 
 
 
