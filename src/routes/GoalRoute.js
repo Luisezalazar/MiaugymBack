@@ -1,9 +1,8 @@
-const express = require('express')
-const pkg = require('@prisma/client')
-const cloudinary = require('cloudinary').v2
-const authMiddleware = require('../middleware/authMiddleware')
-
-const upload = require('../cloudinaryUploader')
+const express = require('express');
+const pkg = require('@prisma/client');
+const { v2: cloudinary } = require('cloudinary');
+const authMiddleware = require('../middleware/authMiddleware');
+const { uploadToCloudinary, upload } = require('../cloudinaryUploader');
 
 //Call functions
 const { PrismaClient } = pkg
@@ -14,7 +13,7 @@ const prisma = new PrismaClient();
 router.post("/createGoal", upload.array('images', 5), authMiddleware, async (req, res) => {
     try {
         const { weight, objective } = req.body
-        const imageFiles = req.files
+        const imageFiles = req.files || []
         const personId = req.user.id
         if (!weight || !objective) {
             return res.status(400).json({ error: "All fields are required" })
@@ -31,11 +30,9 @@ router.post("/createGoal", upload.array('images', 5), authMiddleware, async (req
 
         //Create images Cloudinary
         const uploadImages = []
-        for (let i = 0; i < imageFiles.length; i++) {
-            const img = imageFiles[i]
-            const uploadResult = await cloudinary.uploader.upload(img.path, {
-                folder: "miauGym/goals"
-            })
+        for (const img of imageFiles) {
+            const uploadResult = await uploadToCloudinary(img.buffer, 'miauGym/goals');
+
             uploadImages.push({
                 url: uploadResult.secure_url,
                 goalId: goal.id
@@ -132,12 +129,10 @@ router.put("/updateGoal/:id", upload.array('images', 5), authMiddleware, async (
             }
 
             // Subir nuevas imágenes
-            if (newImageFiles.length > 0) {
+            if (newImagesFiles.length > 0) {
                 const uploadImages = [];
-                for (let i = 0; i < newImageFiles.length; i++) {
-                    const uploadResult = await cloudinary.uploader.upload(newImageFiles[i].path, {
-                        folder: "miauGym/goals"
-                    });
+                for (let i = 0; i < newImagesFiles.length; i++) {
+                    const uploadResult = await uploadToCloudinary(newImagesFiles[i].buffer, 'miauGym/goals');
                     uploadImages.push({
                         url: uploadResult.secure_url,
                         goalId: id
@@ -160,7 +155,7 @@ router.put("/updateGoal/:id", upload.array('images', 5), authMiddleware, async (
 
 
     } catch (error) {
-        onsole.error("Error updating goal:", error);
+        console.error("Error updating goal:", error);
         res.status(500).json({ error: "Error updating goal", details: error });
     }
 })

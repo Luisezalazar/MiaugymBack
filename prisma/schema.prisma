@@ -22,6 +22,7 @@ model RoutineExercise {
   weight      String
   series      String
   repetitions String
+  order       Int     @default(0)
   Routine     Routine @relation(fields: [routineId], references: [id], onDelete: Cascade)
   routineId   Int
 }

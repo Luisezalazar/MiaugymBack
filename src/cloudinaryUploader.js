@@ -1,26 +1,28 @@
-//middelware (multer)
-
-const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const multer = require('multer');
+const { v2: cloudinary } = require('cloudinary');
+const dotenv = require('dotenv');
 
-// Configuración de Cloudinary
 cloudinary.config({
-    cloud_name: process.env.CLOUDNAME,
-    api_key: process.env.API_KEY,
-    api_secret: process.env.API_SECRET,
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.API_KEY,
+  api_secret: process.env.API_SECRET,
 });
 
-// Configuración del storage de multer
-const storage = new CloudinaryStorage({
-    cloudinary: cloudinary,
-    params: {
-        folder: 'products', // Carpeta donde se guardarán las imágenes
-        allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
-        transformation: [{ quality: 'auto', fetch_format: 'auto' }],
-    },
-});
-
-// Exportar el middleware
+const storage = multer.memoryStorage();
 const upload = multer({ storage });
-module.exports = upload;
+
+const uploadToCloudinary = async (fileBuffer, folder) => {
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader
+      .upload_stream({ folder }, (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      })
+      .end(fileBuffer);
+  });
+};
+
+module.exports = {
+  upload,
+  uploadToCloudinary,
+};

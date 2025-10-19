@@ -22,11 +22,12 @@ router.post("/createRoutine", authMiddleware, async (req, res) => {
                 person: { connect: { id: personId } },
                 duration: duration,
                 routineExercise: {
-                    create: routineExercise.map((e) => ({
+                    create: routineExercise.map((e, index) => ({
                         name: e.name,
                         weight: e.weight,
-                        series: e.series,
-                        repetitions: e.repetitions
+                        series: parseInt(e.series),
+                        repetitions: e.repetitions,
+                        order: index
                     })),
                 },
             },
@@ -85,19 +86,21 @@ router.put("/updateRoutine/:id", authMiddleware, async (req, res) => {
                 person: { connect: { id: personId } },
                 routineExercise: {
                     deleteMany: {},
-                    upsert: routineExercise.map((e) => ({
+                    upsert: routineExercise.map((e, index) => ({
                         where: { id: e.id || 0 },
                         update: {
                             name: e.name,
                             weight: e.weight,
                             series: e.series,
                             repetitions: e.repetitions,
+                            order: index
                         },
                         create: {
                             name: e.name,
                             weight: e.weight,
                             series: e.series,
                             repetitions: e.repetitions,
+                            order: index,
                         }
                     }))
                 }
