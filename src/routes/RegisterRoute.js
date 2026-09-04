@@ -26,13 +26,14 @@ router.post("/createPerson", async (req, res) => {
             { expiresIn: "3h" }
         );
 
+        const { password: _, ...personWithoutPassword } = person
         res.status(201).json({
             message: 'User created successfuly',
             token,
-            person
+            person: personWithoutPassword
         })
     } catch (error) {
-        res.status(400).json({ error: "Email already exists", error })
+        res.status(400).json({ error: "Email already exists", detail: error.message })
     }
 })
 
@@ -55,14 +56,15 @@ router.post("/login", async (req, res) => {
             { expiresIn: "1h" }
         );
 
+        const { password: _, ...personWithoutPassword } = person
         res.json({
             message: 'Login successfuly',
             token,
-            person
+            person: personWithoutPassword
         })
 
     } catch (error) {
-        res.status(500).json({ error: "Something went wrong", error })
+        res.status(500).json({ error: "Something went wrong", detail: error.message })
     }
 })
 

@@ -2,7 +2,7 @@ const express = require('express');
 const pkg = require('@prisma/client');
 const { v2: cloudinary } = require('cloudinary');
 const authMiddleware = require('../middleware/authMiddleware');
-const { uploadToCloudinary, upload } = require('../cloudinaryUploader');
+const { uploadToCloudinary, upload } = require('../middleware/cloudinaryUploader');
 
 //Call functions
 const { PrismaClient } = pkg
@@ -69,7 +69,7 @@ router.get("/getPersonGoals", authMiddleware, async (req, res) => {
         if (!getPersonGoals) { return res.status(404).json({ message: 'User not found' }) }
         res.json(getPersonGoals.goals)
     } catch (error) {
-        res.status(500).json({ error: "Error getting data", error })
+        res.status(500).json({ error: "Error getting data", detail: error.message })
     }
 })
 
@@ -78,8 +78,9 @@ router.get("/getPersonGoals", authMiddleware, async (req, res) => {
 router.get("/getGoal/:id", authMiddleware, async (req, res) => {
     try {
         const id = parseInt(req.params.id)
-        const getGoalsById = await prisma.goal.findUnique({
-            where: { id: id },
+        // findFirst acotado por personId: el goal de otro usuario no aparece.
+        const getGoalsById = await prisma.goal.findFirst({
+            where: { id, personId: req.user.id },
             include: {
                 images: true,
             }
@@ -87,7 +88,7 @@ router.get("/getGoal/:id", authMiddleware, async (req, res) => {
         if (!getGoalsById) { return res.status(404).json({ error: "There is no data" }) }
         res.json(getGoalsById)
     } catch (error) {
-        res.status(500).json({ error: "Error getting data", error })
+        res.status(500).json({ error: "Error getting data", detail: error.message })
     }
 })
 
@@ -101,6 +102,18 @@ router.put("/updateGoal/:id", upload.array('images', 5), authMiddleware, async (
 
         if (!weight || !objective) {
             return res.status(400).json({ error: "All fields are required" });
+        }
+
+        /*
+          Control de propiedad. `personId` se leia del token pero no se usaba:
+          el update apuntaba solo a { id }, asi que cualquier usuario logueado
+          podia editar el registro de peso de otro.
+        */
+        const owned = await prisma.goal.findFirst({
+            where: { id, personId }
+        })
+        if (!owned) {
+            return res.status(404).json({ error: "Goal not found" })
         }
 
         const result = await prisma.$transaction(async (prisma) => {
@@ -165,8 +178,10 @@ router.put("/updateGoal/:id", upload.array('images', 5), authMiddleware, async (
 router.delete("/deleteGoal/:id", authMiddleware, async (req, res) => {
     try {
         const id = parseInt(req.params.id);
-        const goal = await prisma.goal.findUnique({
-            where: { id },
+        // Acotado al dueño: antes cualquier usuario logueado podia borrar el
+        // registro de otro, incluidas sus fotos en Cloudinary.
+        const goal = await prisma.goal.findFirst({
+            where: { id, personId: req.user.id },
             include: { images: true }
         });
 

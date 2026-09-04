@@ -27,11 +27,17 @@ router.post("/createRoutine", authMiddleware, async (req, res) => {
                         weight: e.weight,
                         series: parseInt(e.series),
                         repetitions: e.repetitions,
-                        order: index
+                        order: index,
+                        // Vinculo opcional al catalogo: null si el nombre se
+                        // escribio a mano en vez de elegirse de la lista.
+                        exerciseId: e.exerciseId ? parseInt(e.exerciseId) : null
                     })),
                 },
             },
-            include: { routineExercise: true, person: true }
+            include: { routineExercise: {
+                include: { exercise: { select: { slug: true, primaryMuscle: true, frameCount: true } } },
+                orderBy: { order: 'asc' }
+            }, person: { select: { id: true, user: true, email: true } } }
         })
         res.json(routine)
         console.log("Successfully")
@@ -42,32 +48,45 @@ router.post("/createRoutine", authMiddleware, async (req, res) => {
 })
 
 //Get all //  Read
-router.get("/getRoutine", async (req, res) => {
+// Antes estaba abierto y devolvia las rutinas de TODOS los usuarios.
+// Ahora requiere token y solo lista las del propio usuario.
+router.get("/getRoutine", authMiddleware, async (req, res) => {
     try {
-        const getRoutine = await prisma.routine.findMany({ include: { routineExercise: true } });
-        if (getRoutine.length === 0) { console.log('There is no data', error) }
+        const getRoutine = await prisma.routine.findMany({
+            where: { personId: req.user.id },
+            include: { routineExercise: {
+                include: { exercise: { select: { slug: true, primaryMuscle: true, frameCount: true } } },
+                orderBy: { order: 'asc' }
+            } }
+        });
+        // Antes aqui se logueaba `error`, que no existe en este scope.
+        if (getRoutine.length === 0) { console.log('There is no data') }
         res.json(getRoutine)
 
     } catch (error) {
-        res.status(500).json({ error: "Error getting data", error })
+        res.status(500).json({ error: "Error getting data", detail: error.message })
     }
 })
 
 //Get by id // Read
-router.get("/getRoutine/:id", async (req, res) => {
+router.get("/getRoutine/:id", authMiddleware, async (req, res) => {
     try {
         const id = parseInt(req.params.id)
-        const getRoutineId = await prisma.routine.findUnique({
-            where: {
-                id: id,
-            },
-            include: { routineExercise: true }
+        // findFirst con personId: si la rutina es de otro usuario, no aparece.
+        const getRoutineId = await prisma.routine.findFirst({
+            where: { id, personId: req.user.id },
+            include: { routineExercise: {
+                include: { exercise: { select: { slug: true, primaryMuscle: true, frameCount: true } } },
+                orderBy: { order: 'asc' }
+            } }
         })
-        if (!getRoutineId) { res.status(404).json({ error: "There is no data" }) }
+        // Faltaba el return: se mandaba el 404 y despues el json, rompiendo
+        // con ERR_HTTP_HEADERS_SENT.
+        if (!getRoutineId) { return res.status(404).json({ error: "There is no data" }) }
         res.json(getRoutineId)
 
     } catch (error) {
-        res.status(500).json({ error: "Error getting data", error })
+        res.status(500).json({ error: "Error getting data", detail: error.message })
     }
 })
 
@@ -78,12 +97,23 @@ router.put("/updateRoutine/:id", authMiddleware, async (req, res) => {
         const personId = req.user.id
         const routineId = parseInt(req.params.id)
 
+        /*
+          Control de propiedad. Antes el update apuntaba solo a { id: routineId }
+          y ademas hacia `person: { connect: { id: personId } }`, asi que
+          cualquier usuario logueado podia editar la rutina de otro Y quedarsela.
+        */
+        const owned = await prisma.routine.findFirst({
+            where: { id: routineId, personId }
+        })
+        if (!owned) {
+            return res.status(404).json({ error: "Routine not found" })
+        }
+
         const updateRoutine = await prisma.routine.update({
             where: { id: routineId },
             data: {
                 name,
                 duration,
-                person: { connect: { id: personId } },
                 routineExercise: {
                     deleteMany: {},
                     upsert: routineExercise.map((e, index) => ({
@@ -93,7 +123,8 @@ router.put("/updateRoutine/:id", authMiddleware, async (req, res) => {
                             weight: e.weight,
                             series: e.series,
                             repetitions: e.repetitions,
-                            order: index
+                            order: index,
+                            exerciseId: e.exerciseId ? parseInt(e.exerciseId) : null
                         },
                         create: {
                             name: e.name,
@@ -101,11 +132,15 @@ router.put("/updateRoutine/:id", authMiddleware, async (req, res) => {
                             series: e.series,
                             repetitions: e.repetitions,
                             order: index,
+                            exerciseId: e.exerciseId ? parseInt(e.exerciseId) : null
                         }
                     }))
                 }
             },
-            include: { routineExercise: true, person: true },
+            include: { routineExercise: {
+                include: { exercise: { select: { slug: true, primaryMuscle: true, frameCount: true } } },
+                orderBy: { order: 'asc' }
+            }, person: { select: { id: true, user: true, email: true } } },
         })
         res.json(updateRoutine)
 
