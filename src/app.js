@@ -37,7 +37,9 @@ if (process.env.TRUST_PROXY) {
 const DEFAULT_ORIGINS = [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
-    'http://localhost:4173',   // vite preview
+    'http://localhost:4173',
+    'https://miaugym-front.vercel.app',
+    'https://miaugym-front-eqzv9txf8-luis-zalazars-projects.vercel.app'
 ]
 
 const allowedOrigins = [
