@@ -24,7 +24,9 @@ model RoutineExercise {
   repetitions String
   routineId   Int
   order       Int     @default(0)
-  Routine     Routine @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  exerciseId  Int?
+  Routine     Routine   @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  exercise    Exercise? @relation(fields: [exerciseId], references: [id], onDelete: SetNull)
 }
 
 model Routine {
@@ -36,9 +38,23 @@ model Routine {
   routineExercise RoutineExercise[]
 }
 
+// Catalogo de ejercicios importado de workout-guide (CC BY-SA 4.0).
+// El slug es la clave del dataset y con el se arman las URLs de los 3 frames.
 model Exercise {
-  id   Int    @id @default(autoincrement())
-  name String
+  id               Int      @id @default(autoincrement())
+  slug             String   @unique
+  name             String
+  exerciseType     String
+  equipment        String
+  primaryMuscle    String
+  secondaryMuscles String[]
+  isStretch        Boolean  @default(false)
+  frameCount       Int      @default(3)
+
+  routineExercises RoutineExercise[]
+
+  @@index([primaryMuscle])
+  @@index([equipment])
 }
 
 model Goal {
