@@ -113,7 +113,7 @@ router.put("/updateRoutine/:id", authMiddleware, async (req, res) => {
             where: { id: routineId },
             data: {
                 name,
-                duration,
+                duration: duration != null && duration !== '' ? parseInt(duration) : null,
                 routineExercise: {
                     deleteMany: {},
                     upsert: routineExercise.map((e, index) => ({
@@ -121,7 +121,10 @@ router.put("/updateRoutine/:id", authMiddleware, async (req, res) => {
                         update: {
                             name: e.name,
                             weight: e.weight,
-                            series: e.series,
+                            // El esquema pide Int y los inputs type="number"
+                            // devuelven string: sin parseInt, Prisma rechaza el
+                            // update apenas se toca el campo Series.
+                            series: parseInt(e.series),
                             repetitions: e.repetitions,
                             order: index,
                             exerciseId: e.exerciseId ? parseInt(e.exerciseId) : null
@@ -129,7 +132,7 @@ router.put("/updateRoutine/:id", authMiddleware, async (req, res) => {
                         create: {
                             name: e.name,
                             weight: e.weight,
-                            series: e.series,
+                            series: parseInt(e.series),
                             repetitions: e.repetitions,
                             order: index,
                             exerciseId: e.exerciseId ? parseInt(e.exerciseId) : null
@@ -146,7 +149,7 @@ router.put("/updateRoutine/:id", authMiddleware, async (req, res) => {
 
     } catch (error) {
         console.error("Error updating routine: ", error)
-        res.status(500).json({ error: "Error updating routine" })
+        res.status(500).json({ error: "Error updating routine", detail: error.message })
     }
 })
 

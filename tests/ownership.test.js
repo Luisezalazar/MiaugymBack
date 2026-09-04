@@ -140,6 +140,29 @@ describe('Rutinas', () => {
         assert.equal(res.status, 200)
         assert.equal(res.body.name, 'Renombrada')
     })
+
+    test('acepta series y duration como texto, que es lo que manda el formulario', async () => {
+        /*
+          Regresion: el esquema pide Int y los inputs type="number" devuelven
+          string. createRoutine hacia parseInt pero updateRoutine no, asi que
+          editar una rutina fallaba con 500 apenas se tocaba el campo Series.
+        */
+        const res = await api(`/routine/updateRoutine/${rutinaId}`, {
+            method: 'PUT',
+            token: victima.token,
+            body: {
+                name: 'Con texto',
+                duration: '90',
+                routineExercise: [
+                    { name: 'Press banca', weight: '70', series: '5', repetitions: '8' },
+                ],
+            },
+        })
+        assert.equal(res.status, 200, 'editar con valores de texto deberia funcionar')
+        assert.equal(res.body.duration, 90)
+        assert.equal(res.body.routineExercise[0].series, 5)
+        assert.equal(typeof res.body.routineExercise[0].series, 'number')
+    })
 })
 
 describe('Objetivos de peso', () => {
